@@ -24,7 +24,7 @@ fn ray_color(r: &Ray, world: &World) -> Color {
         (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
     }
 }
-
+///https://misterdanb.github.io/raytracinginrust/#diffusematerials
 fn main() {
     let timer = Instant::now();
 
