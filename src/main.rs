@@ -1,5 +1,6 @@
 mod camera;
 mod hit;
+mod material;
 mod ray;
 mod sphere;
 mod vec;
@@ -12,6 +13,7 @@ use rand::Rng;
 use vec::Vec3;
 
 use crate::camera::Camera;
+use crate::material::{Dielectric, Lambertian, Metal, Rcable};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec::Color;
@@ -22,11 +24,11 @@ fn ray_color(r: &Ray, world: &World, depth: u64) -> Color {
     }
 
     if let Some(rec) = world.hit(r, 0.001, f64::INFINITY) {
-        // let target = rec.p + rec.normal + Vec3::random_in_unit_sphere().normalized();
-        let target = rec.p + Vec3::random_in_hemisphere(rec.normal);
-        let r = Ray::new(rec.p, target - rec.p);
-
-        0.5 * ray_color(&r, world, depth - 1)
+        if let Some((attentuation, scattered)) = rec.mat.scatter(r, &rec) {
+            attentuation.blend_color(&ray_color(&scattered, world, depth - 1))
+        } else {
+            Color::new(0.0, 0.0, 0.0)
+        }
     } else {
         let unit_direction = r.direction().normalized();
         let t = 0.5 * (unit_direction.y() + 1.0);
@@ -39,16 +41,38 @@ fn main() {
 
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u64 = 512;
+    const IMAGE_WIDTH: u64 = 1920 / 2;
     const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
     const SAMPLES_PER_PIXEL: u64 = 100;
-    const MAX_DEPTH: u64 = 5;
+    const MAX_DEPTH: u64 = 10;
 
     // World
     let mut world = World::new();
-    world.push(Sphere::new((0.0, 0.0, -1.0).into(), 0.5).wrap());
-    world.push(Sphere::new((0.2, 1.2, -1.5).into(), 0.15).wrap());
-    world.push(Sphere::new((0.0, -100.5, -1.0).into(), 100.0).wrap());
+
+    let mat_ground = Lambertian::new((0.8, 0.8, 0.0).into()).rc();
+    let mat_center = Metal::new((0.1, 0.2, 0.5).into(), 0.1).rc();
+    let mat_left = Dielectric::new(1.5).rc();
+    let mat_left_inner = Dielectric::new(1.5).rc();
+    let mat_right = Metal::new((0.8, 0.6, 0.2).into(), 1.0).rc();
+
+    let sphere_ground = Sphere::new((0.0, -100.5, -1.0).into(), 100.0, mat_ground);
+    let sphere_center = Sphere::new((0.0, 0.0, -1.0).into(), 0.5, mat_center);
+    let sphere_left = Sphere::new((-1.0, 0.0, -1.0).into(), 0.5, mat_left);
+    let sphere_left_inner = Sphere::new((-1.0, 0.0, -1.0).into(), -0.4, mat_left_inner);
+    let sphere_right = Sphere::new((1.0, 0.0, -1.0).into(), 0.5, mat_right);
+
+    let s = Sphere::new(
+        (0.0, 0.0, -1.5).into(),
+        0.4,
+        Lambertian::new((0.8, 0.4, 0.1).into()).rc(),
+    );
+
+    world.push(sphere_ground.wrap());
+    world.push(sphere_center.wrap());
+    world.push(sphere_left.wrap());
+    world.push(sphere_left_inner.wrap());
+    world.push(sphere_right.wrap());
+    world.push(s.wrap());
 
     // Camera
     let cam = Camera::new();

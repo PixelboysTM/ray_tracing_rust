@@ -1,4 +1,7 @@
+use std::rc::Rc;
+
 use crate::{
+    material::Scatter,
     ray::Ray,
     vec::{Point3, Vec3},
 };
@@ -6,6 +9,7 @@ use crate::{
 pub struct HitRecord {
     pub p: Point3,
     pub normal: Vec3,
+    pub mat: Rc<dyn Scatter>,
     pub t: f64,
     pub front_face: bool,
 }
