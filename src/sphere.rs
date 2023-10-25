@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 use crate::{
     hit::{Hit, HitRecord},
@@ -9,11 +9,11 @@ use crate::{
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    mat: Rc<dyn Scatter>,
+    mat: Arc<dyn Scatter>,
 }
 
 impl Sphere {
-    pub fn new(cen: Point3, r: f64, m: Rc<dyn Scatter>) -> Sphere {
+    pub fn new(cen: Point3, r: f64, m: Arc<dyn Scatter>) -> Sphere {
         Sphere {
             center: cen,
             radius: r,
