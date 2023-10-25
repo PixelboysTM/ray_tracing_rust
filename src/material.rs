@@ -33,7 +33,7 @@ impl Lambertian {
 }
 
 impl Scatter for Lambertian {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
+    fn scatter(&self, _r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
         // let target = rec.p + Vec3::random_in_hemisphere(rec.normal);
 
         let mut scatter_direction = rec.normal + Vec3::random_in_unit_sphere().normalized();

@@ -10,16 +10,15 @@ use std::time::Instant;
 
 use hit::{Hit, World};
 use rand::Rng;
-use vec::Vec3;
 
 use crate::camera::Camera;
 use crate::material::{Dielectric, Lambertian, Metal, Rcable};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use crate::vec::Color;
+use crate::vec::{Color, Point3, Vec3};
 
 fn ray_color(r: &Ray, world: &World, depth: u64) -> Color {
-    if depth <= 0 {
+    if depth == 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
 
@@ -35,7 +34,7 @@ fn ray_color(r: &Ray, world: &World, depth: u64) -> Color {
         (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
     }
 }
-///https://misterdanb.github.io/raytracinginrust/#metal
+///https://misterdanb.github.io/raytracinginrust/#positionablecamera
 fn main() {
     let timer = Instant::now();
 
@@ -61,21 +60,25 @@ fn main() {
     let sphere_left_inner = Sphere::new((-1.0, 0.0, -1.0).into(), -0.4, mat_left_inner);
     let sphere_right = Sphere::new((1.0, 0.0, -1.0).into(), 0.5, mat_right);
 
-    let s = Sphere::new(
-        (0.0, 0.0, -1.5).into(),
-        0.4,
-        Lambertian::new((0.8, 0.4, 0.1).into()).rc(),
-    );
-
     world.push(sphere_ground.wrap());
     world.push(sphere_center.wrap());
     world.push(sphere_left.wrap());
     world.push(sphere_left_inner.wrap());
     world.push(sphere_right.wrap());
-    world.push(s.wrap());
 
     // Camera
-    let cam = Camera::new();
+    let look_from = Point3::new(-2.0, 2.0, 1.0);
+    let look_at = Point3::new(0.0, 0.0, -1.0);
+
+    let cam = Camera::new(
+        look_from,
+        look_at,
+        Vec3::new(0.0, 1.0, 0.0),
+        20.0,
+        ASPECT_RATIO,
+        2.0,
+        (look_from - look_at).length(),
+    );
 
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
