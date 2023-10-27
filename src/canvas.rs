@@ -1,8 +1,8 @@
 use std::ops::{Index, IndexMut};
 
-use image::{DynamicImage, GenericImage, ImageResult, Pixel, Rgba};
+use image::{DynamicImage, GenericImage, ImageResult, Rgba};
 
-use crate::tuples::Tuple;
+use crate::tuples::{helpers::colors, Tuple};
 
 pub struct Canvas {
     width: usize,
@@ -17,7 +17,7 @@ impl Canvas {
         Canvas {
             width,
             height,
-            pixels: Vec::from_iter((0..size).map(|_| Tuple::color(0, 0, 0))),
+            pixels: Vec::from_iter((0..size).map(|_| colors::black())),
         }
     }
 
@@ -61,7 +61,7 @@ impl IndexMut<(usize, usize)> for Canvas {
 #[cfg(test)]
 mod tests {
 
-    use crate::tuples::helpers::color;
+    use crate::tuples::helpers::{color, colors};
 
     use super::*;
 
@@ -73,7 +73,7 @@ mod tests {
 
         for x in 0..10 {
             for y in 0..20 {
-                assert_eq!(c[(x, y)], Tuple::color(0, 0, 0))
+                assert_eq!(c[(x, y)], colors::black())
             }
         }
     }

@@ -1,5 +1,7 @@
+#![allow(dead_code)]
+
 use std::{
-    fmt::{write, Debug},
+    fmt::Debug,
     ops::{Add, Div, Mul, Neg, Sub},
 };
 
@@ -12,13 +14,7 @@ pub struct Tuple {
 }
 
 impl Tuple {
-    pub fn new<F1, F2, F3, F4>(x: F1, y: F2, z: F3, w: F4) -> Tuple
-    where
-        F1: Into<f64>,
-        F2: Into<f64>,
-        F3: Into<f64>,
-        F4: Into<f64>,
-    {
+    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
         Tuple {
             x: x.into(),
             y: y.into(),
@@ -26,28 +22,13 @@ impl Tuple {
             w: w.into(),
         }
     }
-    pub fn point<F1, F2, F3>(x: F1, y: F2, z: F3) -> Tuple
-    where
-        F1: Into<f64>,
-        F2: Into<f64>,
-        F3: Into<f64>,
-    {
+    pub fn point(x: f64, y: f64, z: f64) -> Tuple {
         Tuple::new(x, y, z, 1.0)
     }
-    pub fn vector<F1, F2, F3>(x: F1, y: F2, z: F3) -> Tuple
-    where
-        F1: Into<f64>,
-        F2: Into<f64>,
-        F3: Into<f64>,
-    {
+    pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
         Tuple::new(x, y, z, 0.0)
     }
-    pub fn color<C1, C2, C3>(r: C1, g: C2, b: C3) -> Tuple
-    where
-        C1: Into<f64>,
-        C2: Into<f64>,
-        C3: Into<f64>,
-    {
+    pub fn color(r: f64, g: f64, b: f64) -> Tuple {
         Tuple::new(r, g, b, 0.0)
     }
 
@@ -145,7 +126,7 @@ impl Neg for Tuple {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Tuple::new(0, 0, 0, 0) - self
+        Tuple::new(0.0, 0.0, 0.0, 0.0) - self
     }
 }
 
@@ -153,7 +134,7 @@ impl Mul<f64> for Tuple {
     type Output = Self;
 
     fn mul(self, rhs: f64) -> Self::Output {
-        helpers::tuple(self.x * rhs, self.y * rhs, self.z * rhs, self.w * rhs)
+        Tuple::new(self.x * rhs, self.y * rhs, self.z * rhs, self.w * rhs)
     }
 }
 
@@ -196,7 +177,7 @@ pub mod helpers {
         F3: Into<f64>,
         F4: Into<f64>,
     {
-        Tuple::new(x, y, z, w)
+        Tuple::new(x.into(), y.into(), z.into(), w.into())
     }
 
     pub fn point<F1, F2, F3>(x: F1, y: F2, z: F3) -> Tuple
@@ -205,7 +186,7 @@ pub mod helpers {
         F2: Into<f64>,
         F3: Into<f64>,
     {
-        Tuple::point(x, y, z)
+        Tuple::point(x.into(), y.into(), z.into())
     }
 
     pub fn vector<F1, F2, F3>(x: F1, y: F2, z: F3) -> Tuple
@@ -214,7 +195,7 @@ pub mod helpers {
         F2: Into<f64>,
         F3: Into<f64>,
     {
-        Tuple::vector(x, y, z)
+        Tuple::vector(x.into(), y.into(), z.into())
     }
 
     pub fn color<C1, C2, C3>(x: C1, y: C2, z: C3) -> Tuple
@@ -223,7 +204,53 @@ pub mod helpers {
         C2: Into<f64>,
         C3: Into<f64>,
     {
-        Tuple::color(x, y, z)
+        Tuple::color(x.into(), y.into(), z.into())
+    }
+
+    pub mod colors {
+        use crate::tuples::Tuple;
+
+        pub fn red() -> Tuple {
+            super::color(1, 0, 0)
+        }
+
+        pub fn green() -> Tuple {
+            super::color(0, 1, 0)
+        }
+
+        pub fn blue() -> Tuple {
+            super::color(0, 0, 1)
+        }
+        pub fn white() -> Tuple {
+            super::color(1, 1, 1)
+        }
+        pub fn black() -> Tuple {
+            super::color(0, 0, 0)
+        }
+    }
+
+    pub mod points {
+        use crate::tuples::Tuple;
+
+        pub fn zero() -> Tuple {
+            super::point(0, 0, 0)
+        }
+
+        pub fn one() -> Tuple {
+            super::point(1, 1, 1)
+        }
+    }
+
+    pub mod vector {
+        use crate::tuples::Tuple;
+
+        pub fn zero() -> Tuple {
+            super::vector(0, 0, 0)
+        }
+
+        pub fn one() -> Tuple {
+            super::vector(1, 1, 1)
+        }
     }
 }
 
@@ -234,7 +261,7 @@ mod tests {
 
     #[test]
     fn tuple_point() {
-        let a = Tuple::new(4.3, -4.2, 3.1, 1.0);
+        let a = tuple(4.3, -4.2, 3.1, 1.0);
         assert!(a.x.eps_eq(&4.3));
         assert!(a.y.eps_eq(&-4.2));
         assert!(a.z.eps_eq(&3.1));
@@ -245,7 +272,7 @@ mod tests {
 
     #[test]
     fn tuple_vector() {
-        let a = Tuple::new(4.3, -4.2, 3.1, 0.0);
+        let a = tuple(4.3, -4.2, 3.1, 0.0);
         assert!(a.x.eps_eq(&4.3));
         assert!(a.y.eps_eq(&-4.2));
         assert!(a.z.eps_eq(&3.1));
@@ -256,42 +283,42 @@ mod tests {
 
     #[test]
     fn new_point() {
-        let p = Tuple::point(4.0, -4.0, 3.0);
-        assert_eq!(p, Tuple::new(4.0, -4.0, 3.0, 1.0))
+        let p = point(4.0, -4.0, 3.0);
+        assert_eq!(p, tuple(4.0, -4.0, 3.0, 1.0))
     }
 
     #[test]
     fn new_vector() {
-        let p = Tuple::vector(4.0, -4.0, 3.0);
-        assert_eq!(p, Tuple::new(4.0, -4.0, 3.0, 0.0))
+        let p = vector(4.0, -4.0, 3.0);
+        assert_eq!(p, tuple(4.0, -4.0, 3.0, 0.0))
     }
 
     #[test]
     fn adding_two_tuples() {
-        let a1 = Tuple::new(3, -2, 5, 1);
-        let a2 = Tuple::new(-2, 3, 1, 0);
-        assert_eq!(a1 + a2, Tuple::new(1, 1, 6, 1));
+        let a1 = tuple(3, -2, 5, 1);
+        let a2 = tuple(-2, 3, 1, 0);
+        assert_eq!(a1 + a2, tuple(1, 1, 6, 1));
     }
 
     #[test]
     fn subtractring_two_points() {
-        let p1 = Tuple::point(3, 2, 1);
-        let p2 = Tuple::point(5, 6, 7);
-        assert_eq!(p1 - p2, Tuple::vector(-2, -4, -6));
+        let p1 = point(3, 2, 1);
+        let p2 = point(5, 6, 7);
+        assert_eq!(p1 - p2, vector(-2, -4, -6));
     }
 
     #[test]
     fn subtractring_vector_from_point() {
-        let p = Tuple::point(3, 2, 1);
-        let v = Tuple::vector(5, 6, 7);
-        assert_eq!(p - v, Tuple::point(-2, -4, -6))
+        let p = point(3, 2, 1);
+        let v = vector(5, 6, 7);
+        assert_eq!(p - v, point(-2, -4, -6))
     }
 
     #[test]
     fn subtracting_two_vectors() {
-        let v1 = Tuple::vector(3, 2, 1);
-        let v2 = Tuple::vector(5, 6, 7);
-        assert_eq!(v1 - v2, Tuple::vector(-2, -4, -6));
+        let v1 = vector(3, 2, 1);
+        let v2 = vector(5, 6, 7);
+        assert_eq!(v1 - v2, vector(-2, -4, -6));
     }
 
     #[test]
