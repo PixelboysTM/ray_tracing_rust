@@ -42,6 +42,14 @@ impl Tuple {
     {
         Tuple::new(x, y, z, 0.0)
     }
+    pub fn color<C1, C2, C3>(r: C1, g: C2, b: C3) -> Tuple
+    where
+        C1: Into<f64>,
+        C2: Into<f64>,
+        C3: Into<f64>,
+    {
+        Tuple::new(r, g, b, 0.0)
+    }
 
     pub fn x(&self) -> f64 {
         self.x
@@ -54,6 +62,15 @@ impl Tuple {
     }
     pub fn w(&self) -> f64 {
         self.w
+    }
+    pub fn r(&self) -> f64 {
+        self.x
+    }
+    pub fn g(&self) -> f64 {
+        self.y
+    }
+    pub fn b(&self) -> f64 {
+        self.z
     }
 
     pub fn is_point(&self) -> bool {
@@ -140,6 +157,17 @@ impl Mul<f64> for Tuple {
     }
 }
 
+impl Mul for Tuple {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        assert!(!(self.w().eps_eq(&1.0)));
+        assert!(!(rhs.w().eps_eq(&1.0)));
+
+        Tuple::color(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
+    }
+}
+
 impl Div<f64> for Tuple {
     type Output = Self;
 
@@ -187,6 +215,15 @@ pub mod helpers {
         F3: Into<f64>,
     {
         Tuple::vector(x, y, z)
+    }
+
+    pub fn color<C1, C2, C3>(x: C1, y: C2, z: C3) -> Tuple
+    where
+        C1: Into<f64>,
+        C2: Into<f64>,
+        C3: Into<f64>,
+    {
+        Tuple::color(x, y, z)
     }
 }
 
@@ -336,5 +373,41 @@ mod tests {
         let b = vector(2, 3, 4);
         assert_eq!(a.cross(&b), vector(-1, 2, -1));
         assert_eq!(b.cross(&a), vector(1, -2, 1));
+    }
+
+    #[test]
+    fn colors_are_tuples() {
+        let c = color(-0.5, 0.4, 1.7);
+
+        assert!(c.r().eps_eq(&-0.5));
+        assert!(c.g().eps_eq(&0.4));
+        assert!(c.b().eps_eq(&1.7));
+    }
+
+    #[test]
+    fn adding_colors() {
+        let c1 = color(0.9, 0.6, 0.75);
+        let c2 = color(0.7, 0.1, 0.25);
+        assert_eq!(c1 + c2, color(1.6, 0.7, 1.0));
+    }
+
+    #[test]
+    fn subtracting_colors() {
+        let c1 = color(0.9, 0.6, 0.75);
+        let c2 = color(0.7, 0.1, 0.25);
+        assert_eq!(c1 - c2, color(0.2, 0.5, 0.5));
+    }
+
+    #[test]
+    fn multiply_color_scalar() {
+        let c = color(0.2, 0.3, 0.4);
+        assert_eq!(c * 2.0, color(0.4, 0.6, 0.8));
+    }
+
+    #[test]
+    fn multiplying_colors() {
+        let c1 = color(1, 0.2, 0.4);
+        let c2 = color(0.9, 1, 0.1);
+        assert_eq!(c1 * c2, color(0.9, 0.2, 0.04));
     }
 }
