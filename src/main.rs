@@ -1,10 +1,12 @@
 mod canvas;
+mod matrix;
 mod tuples;
 
 fn main() {
     println!("Hello World");
     pit_01::main();
     pit_02::main();
+    pit_03::main();
 }
 
 mod pit_01 {
@@ -80,5 +82,23 @@ mod pit_02 {
         }
 
         c.save("./temp/pit_02.png").expect("Unable to save file");
+    }
+}
+
+mod pit_03 {
+    use crate::matrix::helpers::{Mat2, Mat4};
+
+    pub fn main() {
+        let a: Mat4 = ((3, -9, 7, 2), (3, -8, 2, -9), (-4, 4, 4, 1), (-6, 5, -1, 1)).into();
+        // let a: Mat2 = ((3, -9), (3, -8)).into();
+        println!("{a:?}");
+
+        println!("Invert of identity:\n{:?}", Mat4::identity());
+        println!("A * inv(A) =\n{:?}", a.clone() * a.inverse());
+        println!(
+            "{:?}=\n{:?}",
+            a.inverse().transpose(),
+            a.transpose().inverse()
+        );
     }
 }
