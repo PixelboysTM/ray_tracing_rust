@@ -1,5 +1,6 @@
 mod canvas;
 mod matrix;
+mod transformation;
 mod tuples;
 
 fn main() {
@@ -7,6 +8,7 @@ fn main() {
     pit_01::main();
     pit_02::main();
     pit_03::main();
+    pit_04::main();
 }
 
 mod pit_01 {
@@ -100,5 +102,30 @@ mod pit_03 {
             a.inverse().transpose(),
             a.transpose().inverse()
         );
+    }
+}
+
+mod pit_04 {
+    use crate::{
+        canvas::Canvas,
+        transformation::rotation_y,
+        tuples::helpers::{colors, point},
+    };
+
+    pub fn main() {
+        let mut c = Canvas::new(100, 100);
+
+        for i in 0..12 {
+            let p = point(0, 0, 45);
+            let rot = rotation_y((30.0 * i as f64).to_radians());
+            let np = rot * p;
+
+            let x = 50.0 + np.x();
+            let y = 50.0 + np.z();
+
+            c[(x as usize, y as usize)] = colors::white();
+        }
+
+        c.save("./temp/pit_04.png").unwrap();
     }
 }
