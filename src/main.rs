@@ -1,4 +1,6 @@
 mod canvas;
+mod light;
+mod material;
 mod matrix;
 mod ray;
 mod sphere;
@@ -12,6 +14,7 @@ fn main() {
     pit_03::main();
     pit_04::main();
     pit_05::main();
+    pit_06::main();
 }
 
 mod pit_01 {
@@ -91,7 +94,7 @@ mod pit_02 {
 }
 
 mod pit_03 {
-    use crate::matrix::helpers::{Mat2, Mat4};
+    use crate::matrix::helpers::Mat4;
 
     pub fn main() {
         let a: Mat4 = ((3, -9, 7, 2), (3, -8, 2, -9), (-4, 4, 4, 1), (-6, 5, -1, 1)).into();
@@ -172,12 +175,75 @@ mod pit_05 {
                 let xs = shape.intersect(&r);
 
                 match xs.hit() {
-                    Some(hit) => canvas[(x, y)] = color,
+                    Some(_) => canvas[(x, y)] = color,
                     None => {}
                 }
             }
         }
 
         canvas.save("./temp/pit_05.png").unwrap();
+    }
+}
+
+mod pit_06 {
+
+    use crate::{
+        canvas::Canvas,
+        light::PointLight,
+        material::Material,
+        ray::{Intersections, Ray},
+        sphere::Sphere,
+        transformation::scaling,
+        tuples::helpers::{color, point},
+    };
+
+    pub fn main() {
+        let ray_origin = point(0, 0, -5);
+        let wall_z = 10.0;
+        let wall_size = 7.0;
+
+        let canvas_pixel = 100;
+
+        let pixel_size = wall_size / canvas_pixel as f64;
+
+        let half = wall_size / 2.0;
+
+        let mut canvas = Canvas::new(canvas_pixel, canvas_pixel);
+
+        let mut shape = Sphere::new();
+        // shape.set_transform(scaling(1.0, 0.5, 1.0));
+        let mut m = Material::default();
+        m.color = color(1, 0.2, 1);
+        shape.set_material(m);
+
+        let light = PointLight::new(color(1, 1, 1), point(-10, 10, -10));
+
+        for y in 0..canvas_pixel - 1 {
+            let world_y = half - pixel_size as f64 * y as f64;
+
+            for x in 0..canvas_pixel - 1 {
+                let world_x = -half + pixel_size as f64 * x as f64;
+
+                let position = point(world_x, world_y, wall_z);
+
+                let r = Ray::new(ray_origin, (position - ray_origin).normalized());
+                let xs = shape.intersect(&r);
+
+                match xs.hit() {
+                    Some(hit) => {
+                        let point = r.at(hit.t());
+                        let normal = hit.object().normal_at(point);
+                        let eye = -r.direction();
+
+                        let color = hit.object().material().lighting(&light, point, eye, normal);
+
+                        canvas[(x, y)] = color;
+                    }
+                    None => {}
+                }
+            }
+        }
+
+        canvas.save("./temp/pit_06.png").unwrap();
     }
 }

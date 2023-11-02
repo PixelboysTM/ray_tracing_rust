@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{
     fmt::Debug,
     ops::{Add, Div, Mul, Neg, Sub},
@@ -78,6 +76,9 @@ impl Tuple {
             self.z * other.x - self.x * other.z,
             self.x * other.y - self.y * other.x,
         )
+    }
+    pub fn reflect(&self, normal: Tuple) -> Tuple {
+        *self - normal * 2.0 * self.dot(&normal)
     }
 }
 
@@ -201,13 +202,13 @@ pub mod helpers {
         Tuple::vector(x.into(), y.into(), z.into())
     }
 
-    pub fn color<C1, C2, C3>(x: C1, y: C2, z: C3) -> Tuple
+    pub fn color<C1, C2, C3>(r: C1, g: C2, b: C3) -> Tuple
     where
         C1: Into<f64>,
         C2: Into<f64>,
         C3: Into<f64>,
     {
-        Tuple::color(x.into(), y.into(), z.into())
+        Tuple::color(r.into(), g.into(), b.into())
     }
 
     pub mod colors {
@@ -439,5 +440,21 @@ mod tests {
         let c1 = color(1, 0.2, 0.4);
         let c2 = color(0.9, 1, 0.1);
         assert_eq!(c1 * c2, color(0.9, 0.2, 0.04));
+    }
+
+    #[test]
+    fn reflect_45() {
+        let v = vector(1, -1, 0);
+        let n = vector(0, 1, 0);
+        let r = v.reflect(n);
+        assert_eq!(r, vector(1, 1, 0));
+    }
+
+    #[test]
+    fn reflect_slanted() {
+        let v = vector(0, -1, 0);
+        let n = vector(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0);
+        let r = v.reflect(n);
+        assert_eq!(r, vector(1, 0, 0));
     }
 }

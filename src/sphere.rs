@@ -1,18 +1,24 @@
 use crate::{
+    material::Material,
     matrix::helpers::Mat4,
     ray::{Intersection, Ray},
-    tuples::helpers::point,
+    tuples::{
+        helpers::{point, points},
+        Tuple,
+    },
 };
 
 #[derive(PartialEq, Debug)]
 pub struct Sphere {
     transform: Mat4,
+    material: Material,
 }
 
 impl Sphere {
     pub fn new() -> Sphere {
         Self {
             transform: Mat4::identity(),
+            material: Material::default(),
         }
     }
     pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
@@ -44,14 +50,28 @@ impl Sphere {
     pub fn set_transform(&mut self, new_transform: Mat4) {
         self.transform = new_transform;
     }
+    pub fn normal_at(&self, p: Tuple) -> Tuple {
+        let object_point = self.transform.inverse() * p;
+        let object_normal = object_point - points::zero();
+        let world_normal = self.transform.inverse().transpose() * object_normal;
+
+        (Tuple::vector(world_normal.x(), world_normal.y(), world_normal.z())).normalized()
+    }
+    pub fn material(&self) -> &Material {
+        &self.material
+    }
+    pub fn set_material(&mut self, new_material: Material) {
+        self.material = new_material;
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
+        material::Material,
         matrix::helpers::Mat4,
         ray::Ray,
-        transformation::{scaling, translation},
+        transformation::{rotation_z, scaling, translation, PI},
         tuples::{
             helpers::{point, vector},
             FEquals,
@@ -166,5 +186,79 @@ mod tests {
         s.set_transform(translation(5.0, 0.0, 0.0));
         let xs = s.intersect(&r);
         assert_eq!(xs.len(), 0);
+    }
+
+    #[test]
+    fn normal_sphere_x() {
+        let s = Sphere::new();
+        let n = s.normal_at(point(1, 0, 0));
+        assert_eq!(n, vector(1, 0, 0));
+    }
+
+    #[test]
+    fn normal_sphere_y() {
+        let s = Sphere::new();
+        let n = s.normal_at(point(0, 1, 0));
+        assert_eq!(n, vector(0, 1, 0));
+    }
+
+    #[test]
+    fn normal_sphere_z() {
+        let s = Sphere::new();
+        let n = s.normal_at(point(0, 0, 1));
+        assert_eq!(n, vector(0, 0, 1));
+    }
+
+    #[test]
+    fn normal_sphere_nonaxial() {
+        let t: f64 = 3.0_f64.sqrt() / 3.0;
+
+        let s = Sphere::new();
+        let n = s.normal_at(point(t, t, t));
+        assert_eq!(n, vector(t, t, t));
+    }
+
+    #[test]
+    fn normal_is_normalized() {
+        let t: f64 = 3.0_f64.sqrt() / 3.0;
+        let s = Sphere::new();
+        let n = s.normal_at(point(t, t, t));
+        assert_eq!(n, n.normalized())
+    }
+
+    #[test]
+    fn normal_on_translated() {
+        let mut s = Sphere::new();
+        s.set_transform(translation(0.0, 1.0, 0.0));
+        let n = s.normal_at(point(0, 1.70711, -0.70711));
+        assert_eq!(n, vector(0, 0.70711, -0.70711));
+    }
+
+    #[test]
+    fn normal_on_transformed() {
+        let mut s = Sphere::new();
+        s.set_transform(scaling(1.0, 0.5, 1.0) * rotation_z(PI / 5.0));
+        let n = s.normal_at(point(0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0));
+        assert_eq!(n, vector(0, 0.97014, -0.24254));
+    }
+
+    #[test]
+    fn sphere_default_material() {
+        let s = Sphere::new();
+
+        let m = s.material();
+
+        assert_eq!(m, &Material::default());
+    }
+
+    #[test]
+    fn sphere_modified_material() {
+        let mut s = Sphere::new();
+
+        let mut m = Material::default();
+
+        m.ambient = 1.0;
+        s.set_material(m.clone());
+        assert_eq!(s.material(), &m);
     }
 }
