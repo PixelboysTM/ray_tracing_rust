@@ -1,5 +1,7 @@
 mod canvas;
 mod matrix;
+mod ray;
+mod sphere;
 mod transformation;
 mod tuples;
 
@@ -9,6 +11,7 @@ fn main() {
     pit_02::main();
     pit_03::main();
     pit_04::main();
+    pit_05::main();
 }
 
 mod pit_01 {
@@ -127,5 +130,54 @@ mod pit_04 {
         }
 
         c.save("./temp/pit_04.png").unwrap();
+    }
+}
+
+mod pit_05 {
+
+    use crate::{
+        canvas::Canvas,
+        ray::{Intersections, Ray},
+        sphere::Sphere,
+        transformation::scaling,
+        tuples::helpers::{color, point},
+    };
+
+    pub fn main() {
+        let ray_origin = point(0, 0, -5);
+        let wall_z = 10.0;
+        let wall_size = 7.0;
+
+        let canvas_pixel = 800;
+
+        let pixel_size = wall_size / canvas_pixel as f64;
+
+        let half = wall_size / 2.0;
+
+        let mut canvas = Canvas::new(canvas_pixel, canvas_pixel);
+        let color = color(1, 0, 0);
+
+        let mut shape = Sphere::new();
+        shape.set_transform(scaling(1.0, 0.5, 1.0));
+
+        for y in 0..canvas_pixel - 1 {
+            let world_y = half - pixel_size as f64 * y as f64;
+
+            for x in 0..canvas_pixel - 1 {
+                let world_x = -half + pixel_size as f64 * x as f64;
+
+                let position = point(world_x, world_y, wall_z);
+
+                let r = Ray::new(ray_origin, (position - ray_origin).normalized());
+                let xs = shape.intersect(&r);
+
+                match xs.hit() {
+                    Some(hit) => canvas[(x, y)] = color,
+                    None => {}
+                }
+            }
+        }
+
+        canvas.save("./temp/pit_05.png").unwrap();
     }
 }
