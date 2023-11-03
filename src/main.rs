@@ -206,7 +206,6 @@ mod pit_06 {
         material::Material,
         ray::{Intersections, Ray},
         sphere::Sphere,
-        transformation::scaling,
         tuples::helpers::{color, point},
     };
 
@@ -215,7 +214,7 @@ mod pit_06 {
         let wall_z = 10.0;
         let wall_size = 7.0;
 
-        let canvas_pixel = 100;
+        let canvas_pixel = 800;
 
         let pixel_size = wall_size / canvas_pixel as f64;
 
@@ -231,32 +230,36 @@ mod pit_06 {
 
         let light = PointLight::new(color(1, 1, 1), point(-10, 10, -10));
 
-        for y in 0..canvas_pixel - 1 {
-            let world_y = half - pixel_size as f64 * y as f64;
+        let time = time!({
+            for y in 0..canvas_pixel - 1 {
+                let world_y = half - pixel_size as f64 * y as f64;
 
-            for x in 0..canvas_pixel - 1 {
-                let world_x = -half + pixel_size as f64 * x as f64;
+                for x in 0..canvas_pixel - 1 {
+                    let world_x = -half + pixel_size as f64 * x as f64;
 
-                let position = point(world_x, world_y, wall_z);
+                    let position = point(world_x, world_y, wall_z);
 
-                let r = Ray::new(ray_origin, (position - ray_origin).normalized());
-                let xs = shape.intersect(&r);
+                    let r = Ray::new(ray_origin, (position - ray_origin).normalized());
+                    let xs = shape.intersect(&r);
 
-                match xs.hit() {
-                    Some(hit) => {
-                        let point = r.at(hit.t());
-                        let normal = hit.object().normal_at(point);
-                        let eye = -r.direction();
+                    match xs.hit() {
+                        Some(hit) => {
+                            let point = r.at(hit.t());
+                            let normal = hit.object().normal_at(point);
+                            let eye = -r.direction();
 
-                        let color = hit.object().material().lighting(&light, point, eye, normal);
+                            let color =
+                                hit.object().material().lighting(&light, point, eye, normal);
 
-                        canvas[(x, y)] = color;
+                            canvas[(x, y)] = color;
+                        }
+                        None => {}
                     }
-                    None => {}
                 }
             }
-        }
+        });
 
+        println!("{:#?}", time);
         canvas.save("./temp/pit_06.png").unwrap();
     }
 }
