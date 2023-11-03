@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{
     fmt::Debug,
     ops::{Add, Div, Mul, Neg, Sub},
@@ -55,10 +53,10 @@ impl Tuple {
     }
 
     pub fn is_point(&self) -> bool {
-        self.w.eps_eq(&1.0)
+        self.w.eps_eq(1.0)
     }
     pub fn is_vector(&self) -> bool {
-        self.w.eps_eq(&0.0)
+        self.w.eps_eq(0.0)
     }
     pub fn magnitude(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w).sqrt()
@@ -70,14 +68,17 @@ impl Tuple {
         self.x * b.x + self.y * b.y + self.z * b.z + self.w * b.w
     }
     pub fn cross(&self, other: &Self) -> Tuple {
-        assert!(self.w.eps_eq(&0.0));
-        assert!(other.w.eps_eq(&0.0));
+        assert!(self.w.eps_eq(0.0));
+        assert!(other.w.eps_eq(0.0));
 
         Tuple::vector(
             self.y * other.z - self.z * other.y,
             self.z * other.x - self.x * other.z,
             self.x * other.y - self.y * other.x,
         )
+    }
+    pub fn reflect(&self, normal: Tuple) -> Tuple {
+        *self - normal * 2.0 * self.dot(&normal)
     }
 }
 
@@ -89,10 +90,10 @@ impl Debug for Tuple {
 
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
-        self.x.eps_eq(&other.x)
-            && self.y.eps_eq(&other.y)
-            && self.z.eps_eq(&other.z)
-            && self.w.eps_eq(&other.w)
+        self.x.eps_eq(other.x)
+            && self.y.eps_eq(other.y)
+            && self.z.eps_eq(other.z)
+            && self.w.eps_eq(other.w)
     }
 }
 
@@ -142,8 +143,8 @@ impl Mul for Tuple {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        assert!(!(self.w().eps_eq(&1.0)));
-        assert!(!(rhs.w().eps_eq(&1.0)));
+        assert!(!(self.w().eps_eq(1.0)));
+        assert!(!(rhs.w().eps_eq(1.0)));
 
         Tuple::color(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
     }
@@ -158,13 +159,16 @@ impl Div<f64> for Tuple {
 }
 
 const EPSILON: f64 = 0.00001;
-trait FEquals {
-    fn eps_eq(&self, rhs: &Self) -> bool;
+pub trait FEquals {
+    type Rhs;
+    fn eps_eq(&self, rhs: Self::Rhs) -> bool;
 }
 impl FEquals for f64 {
-    fn eps_eq(&self, rhs: &Self) -> bool {
+    fn eps_eq(&self, rhs: Self::Rhs) -> bool {
         (self - rhs).abs() < EPSILON
     }
+
+    type Rhs = f64;
 }
 
 pub mod helpers {
@@ -198,13 +202,13 @@ pub mod helpers {
         Tuple::vector(x.into(), y.into(), z.into())
     }
 
-    pub fn color<C1, C2, C3>(x: C1, y: C2, z: C3) -> Tuple
+    pub fn color<C1, C2, C3>(r: C1, g: C2, b: C3) -> Tuple
     where
         C1: Into<f64>,
         C2: Into<f64>,
         C3: Into<f64>,
     {
-        Tuple::color(x.into(), y.into(), z.into())
+        Tuple::color(r.into(), g.into(), b.into())
     }
 
     pub mod colors {
@@ -262,10 +266,10 @@ mod tests {
     #[test]
     fn tuple_point() {
         let a = tuple(4.3, -4.2, 3.1, 1.0);
-        assert!(a.x.eps_eq(&4.3));
-        assert!(a.y.eps_eq(&-4.2));
-        assert!(a.z.eps_eq(&3.1));
-        assert!(a.w.eps_eq(&1.0));
+        assert!(a.x.eps_eq(4.3));
+        assert!(a.y.eps_eq(-4.2));
+        assert!(a.z.eps_eq(3.1));
+        assert!(a.w.eps_eq(1.0));
         assert!(a.is_point());
         assert!(!a.is_vector());
     }
@@ -273,10 +277,10 @@ mod tests {
     #[test]
     fn tuple_vector() {
         let a = tuple(4.3, -4.2, 3.1, 0.0);
-        assert!(a.x.eps_eq(&4.3));
-        assert!(a.y.eps_eq(&-4.2));
-        assert!(a.z.eps_eq(&3.1));
-        assert!(a.w.eps_eq(&0.0));
+        assert!(a.x.eps_eq(4.3));
+        assert!(a.y.eps_eq(-4.2));
+        assert!(a.z.eps_eq(3.1));
+        assert!(a.w.eps_eq(0.0));
         assert!(!a.is_point());
         assert!(a.is_vector());
     }
@@ -383,7 +387,7 @@ mod tests {
         );
 
         let norm = v.normalized();
-        assert!(norm.magnitude().eps_eq(&1.0));
+        assert!(norm.magnitude().eps_eq(1.0));
     }
 
     #[test]
@@ -391,7 +395,7 @@ mod tests {
         let a = vector(1, 2, 3);
         let b = vector(2, 3, 4);
 
-        assert!(a.dot(&b).eps_eq(&20.0));
+        assert!(a.dot(&b).eps_eq(20.0));
     }
 
     #[test]
@@ -406,9 +410,9 @@ mod tests {
     fn colors_are_tuples() {
         let c = color(-0.5, 0.4, 1.7);
 
-        assert!(c.r().eps_eq(&-0.5));
-        assert!(c.g().eps_eq(&0.4));
-        assert!(c.b().eps_eq(&1.7));
+        assert!(c.r().eps_eq(-0.5));
+        assert!(c.g().eps_eq(0.4));
+        assert!(c.b().eps_eq(1.7));
     }
 
     #[test]
@@ -436,5 +440,21 @@ mod tests {
         let c1 = color(1, 0.2, 0.4);
         let c2 = color(0.9, 1, 0.1);
         assert_eq!(c1 * c2, color(0.9, 0.2, 0.04));
+    }
+
+    #[test]
+    fn reflect_45() {
+        let v = vector(1, -1, 0);
+        let n = vector(0, 1, 0);
+        let r = v.reflect(n);
+        assert_eq!(r, vector(1, 1, 0));
+    }
+
+    #[test]
+    fn reflect_slanted() {
+        let v = vector(0, -1, 0);
+        let n = vector(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0);
+        let r = v.reflect(n);
+        assert_eq!(r, vector(1, 0, 0));
     }
 }
