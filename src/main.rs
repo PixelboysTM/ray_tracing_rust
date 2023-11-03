@@ -1,10 +1,22 @@
 mod canvas;
 mod tuples;
 
+macro_rules! time {
+    ($b:block) => {{
+        let xx_timer_bb_dnsajkfdasb = std::time::Instant::now();
+        $b;
+        xx_timer_bb_dnsajkfdasb.elapsed()
+    }};
+}
+
 fn main() {
     println!("Hello World");
     pit_01::main();
-    pit_02::main();
+
+    let time = time!({
+        pit_02::main();
+    });
+    println!("{time:#?}");
 }
 
 mod pit_01 {
