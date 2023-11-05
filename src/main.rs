@@ -19,17 +19,12 @@ macro_rules! time {
 
 fn main() {
     println!("Hello World");
-    pit_01::main();
-
-    let time = time!({
-        pit_02::main();
-    });
-    println!("{time:#?}");
-
-    pit_03::main();
-    pit_04::main();
-    pit_05::main();
-    pit_06::main();
+    // pit_01::main();
+    // pit_02::main();
+    // pit_03::main();
+    // pit_04::main();
+    // pit_05::main();
+    // pit_06::main();
     pit_07::main();
 }
 
@@ -268,6 +263,8 @@ mod pit_06 {
 }
 
 mod pit_07 {
+    use std::time::Instant;
+
     use crate::{
         camera::Camera,
         light::PointLight,
@@ -344,14 +341,17 @@ mod pit_07 {
         world.set_light(Some(PointLight::new(color(1, 1, 1), point(-10, 10, -10))));
 
         let camera = Camera::new_transformed(
-            100,
-            50,
+            800,
+            600,
             PI / 3.0,
             view_transform(point(0, 1.5, -5), point(0, 1, 0), vector(0, 1, 0)),
         );
 
+        let timer = Instant::now();
         let canvas = camera.render(&world);
+        let took = timer.elapsed();
 
         canvas.save("./temp/pit_07.png").unwrap();
+        println!("Rendering took: {:#?}", took);
     }
 }
