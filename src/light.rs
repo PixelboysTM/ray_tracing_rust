@@ -1,5 +1,6 @@
 use crate::tuples::Tuple;
 
+#[derive(Debug, PartialEq)]
 pub struct PointLight {
     intensity: Tuple,
     position: Tuple,

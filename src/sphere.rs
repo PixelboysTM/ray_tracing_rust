@@ -60,6 +60,9 @@ impl Sphere {
     pub fn material(&self) -> &Material {
         &self.material
     }
+    pub fn material_mut(&mut self) -> &mut Material {
+        &mut self.material
+    }
     pub fn set_material(&mut self, new_material: Material) {
         self.material = new_material;
     }

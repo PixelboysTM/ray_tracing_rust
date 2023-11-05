@@ -44,6 +44,30 @@ impl<'a> Intersection<'a> {
     pub fn object(&self) -> &'a Sphere {
         self.object
     }
+
+    pub fn prepare_comps(&self, ray: &Ray) -> Computations {
+        let point = ray.at(self.t);
+        let normalv = self.object.normal_at(point);
+        let inside = normalv.dot(&-ray.direction()) < 0.0;
+
+        Computations {
+            t: self.t,
+            object: self.object,
+            point,
+            eyev: -ray.direction(),
+            normalv: normalv * if inside { -1.0 } else { 1.0 },
+            inside,
+        }
+    }
+}
+
+pub struct Computations<'a> {
+    pub t: f64,
+    pub object: &'a Sphere,
+    pub point: Tuple,
+    pub eyev: Tuple,
+    pub normalv: Tuple,
+    pub inside: bool,
 }
 
 pub trait Intersections {
@@ -186,5 +210,40 @@ mod tests {
         let r2 = r.transform(&m);
         assert_eq!(r2.origin(), point(2, 6, 12));
         assert_eq!(r2.direction(), vector(0, 3, 0));
+    }
+
+    #[test]
+    fn precomputing_intersections() {
+        let r = Ray::new(point(0, 0, -5), vector(0, 0, 1));
+        let shape = Sphere::new();
+        let i = Intersection::new(4.0, &shape);
+        let comps = i.prepare_comps(&r);
+
+        assert!(comps.t.eps_eq(i.t));
+        assert_eq!(comps.object, i.object);
+        assert_eq!(comps.point, point(0, 0, -1));
+        assert_eq!(comps.eyev, vector(0, 0, -1));
+        assert_eq!(comps.normalv, vector(0, 0, -1));
+    }
+
+    #[test]
+    fn hit_on_outside() {
+        let r = Ray::new(point(0, 0, -5), vector(0, 0, 1));
+        let shape = Sphere::new();
+        let i = Intersection::new(4.0, &shape);
+        let comps = i.prepare_comps(&r);
+        assert_eq!(comps.inside, false);
+    }
+
+    #[test]
+    fn hit_on_inside() {
+        let r = Ray::new(point(0, 0, 0), vector(0, 0, 1));
+        let shape = Sphere::new();
+        let i = Intersection::new(1.0, &shape);
+        let comps = i.prepare_comps(&r);
+        assert_eq!(comps.inside, true);
+        assert_eq!(comps.point, point(0, 0, 1));
+        assert_eq!(comps.eyev, vector(0, 0, -1));
+        assert_eq!(comps.normalv, vector(0, 0, -1));
     }
 }

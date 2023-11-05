@@ -1,4 +1,4 @@
-use crate::matrix::helpers::Mat4;
+use crate::{matrix::helpers::Mat4, tuples::Tuple};
 
 pub fn translation(x: f64, y: f64, z: f64) -> Mat4 {
     Mat4::new(
@@ -80,6 +80,32 @@ pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Mat4 {
     )
 }
 
+pub fn view_transform(from: Tuple, to: Tuple, up: Tuple) -> Mat4 {
+    let forward = (to - from).normalized();
+    let upn = up.normalized();
+    let left = forward.cross(&upn);
+    let true_up = left.cross(&forward);
+
+    Mat4::new(
+        left.x(),
+        left.y(),
+        left.z(),
+        0.0,
+        true_up.x(),
+        true_up.y(),
+        true_up.z(),
+        0.0,
+        -forward.x(),
+        -forward.y(),
+        -forward.z(),
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    ) * translation(-from.x(), -from.y(), -from.z())
+}
+
 pub const PI: f64 = std::f64::consts::PI;
 
 pub mod helper {
@@ -136,7 +162,8 @@ pub mod helper {
 mod tests {
 
     use crate::{
-        transformation::{rotation_y, rotation_z, shearing},
+        matrix::helpers::Mat4,
+        transformation::{rotation_y, rotation_z, shearing, view_transform},
         tuples::helpers::{point, vector},
     };
 
@@ -337,5 +364,50 @@ mod tests {
         let p = point(1, 0, 1);
 
         assert_eq!(t * p, point(15, 0, 7));
+    }
+
+    fn view_transformation_matrix_default() {
+        let from = point(0, 0, 0);
+        let to = point(0, 0, -1);
+        let up = point(0, 1, 0);
+        let t = view_transform(from, to, up);
+
+        assert_eq!(t, Mat4::identity());
+    }
+
+    fn view_transformation_positive_z() {
+        let from = point(0, 0, 0);
+        let to = point(0, 0, 1);
+        let up = point(0, 1, 0);
+        let t = view_transform(from, to, up);
+
+        assert_eq!(t, scaling(-1.0, -1.0, -1.0));
+    }
+
+    fn view_transformation_moves_world() {
+        let from = point(0, 0, 8);
+        let to = point(0, 0, 0);
+        let up = point(0, 1, 0);
+        let t = view_transform(from, to, up);
+
+        assert_eq!(t, translation(0.0, 0.0, -8.0));
+    }
+
+    fn view_transformation_arbitrary() {
+        let from = point(1, 3, 2);
+        let to = point(4, -2, 8);
+        let up = point(1, 1, 0);
+        let t = view_transform(from, to, up);
+
+        assert_eq!(
+            t,
+            (
+                (-0.50709, 0.50709, 0.67612, -2.36643),
+                (0.76772, 0.60609, 0.12122, -2.82843),
+                (-0.35857, 0.59761, -0.71714, 0.0),
+                (0.0, 0.0, 0.0, 1.0)
+            )
+                .into()
+        );
     }
 }
