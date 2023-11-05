@@ -13,12 +13,7 @@ pub struct Tuple {
 
 impl Tuple {
     pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
-        Tuple {
-            x: x.into(),
-            y: y.into(),
-            z: z.into(),
-            w: w.into(),
-        }
+        Tuple { x, y, z, w }
     }
     pub fn point(x: f64, y: f64, z: f64) -> Tuple {
         Tuple::new(x, y, z, 1.0)
