@@ -1,7 +1,10 @@
 use std::{
     fmt::Debug,
-    ops::{Add, Div, Mul, Neg, Sub},
+    ops::{Add, Div, Mul, MulAssign, Neg, Sub},
+    rc::Rc,
 };
+
+use crate::patterns::Solid;
 
 #[derive(Clone, Copy)]
 pub struct Tuple {
@@ -12,16 +15,16 @@ pub struct Tuple {
 }
 
 impl Tuple {
-    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
+    pub const fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
         Tuple { x, y, z, w }
     }
-    pub fn point(x: f64, y: f64, z: f64) -> Tuple {
+    pub const fn point(x: f64, y: f64, z: f64) -> Tuple {
         Tuple::new(x, y, z, 1.0)
     }
-    pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
+    pub const fn vector(x: f64, y: f64, z: f64) -> Tuple {
         Tuple::new(x, y, z, 0.0)
     }
-    pub fn color(r: f64, g: f64, b: f64) -> Tuple {
+    pub const fn color(r: f64, g: f64, b: f64) -> Tuple {
         Tuple::new(r, g, b, 0.0)
     }
 
@@ -74,6 +77,10 @@ impl Tuple {
     }
     pub fn reflect(&self, normal: Tuple) -> Tuple {
         *self - normal * 2.0 * self.dot(&normal)
+    }
+
+    pub fn solid(self) -> Rc<Solid> {
+        Rc::new(Solid::new(self))
     }
 }
 
@@ -134,6 +141,12 @@ impl Mul<f64> for Tuple {
     }
 }
 
+impl MulAssign<f64> for Tuple {
+    fn mul_assign(&mut self, rhs: f64) {
+        *self = *self * rhs;
+    }
+}
+
 impl Mul for Tuple {
     type Output = Self;
 
@@ -153,7 +166,7 @@ impl Div<f64> for Tuple {
     }
 }
 
-const EPSILON: f64 = 0.00001;
+pub const EPSILON: f64 = 0.00001;
 pub trait FEquals {
     type Rhs;
     fn eps_eq(&self, rhs: Self::Rhs) -> bool;
@@ -167,6 +180,8 @@ impl FEquals for f64 {
 }
 
 pub mod helpers {
+    use crate::{matrix::helpers::Mat4, patterns::Pattern};
+
     use super::Tuple;
 
     pub fn tuple<F1, F2, F3, F4>(x: F1, y: F2, z: F3, w: F4) -> Tuple
@@ -209,46 +224,50 @@ pub mod helpers {
     pub mod colors {
         use crate::tuples::Tuple;
 
-        pub fn red() -> Tuple {
-            super::color(1, 0, 0)
+        pub const fn red() -> Tuple {
+            Tuple::color(1.0, 0.0, 0.0)
         }
 
-        pub fn green() -> Tuple {
-            super::color(0, 1, 0)
+        pub const fn green() -> Tuple {
+            Tuple::color(0.0, 1.0, 0.0)
         }
 
-        pub fn blue() -> Tuple {
-            super::color(0, 0, 1)
+        pub const fn blue() -> Tuple {
+            Tuple::color(0.0, 0.0, 1.0)
         }
-        pub fn white() -> Tuple {
-            super::color(1, 1, 1)
+        pub const fn white() -> Tuple {
+            Tuple::color(1.0, 1.0, 1.0)
         }
-        pub fn black() -> Tuple {
-            super::color(0, 0, 0)
+        pub const fn black() -> Tuple {
+            Tuple::color(0.0, 0.0, 0.0)
         }
     }
 
     pub mod points {
         use crate::tuples::Tuple;
 
-        pub fn zero() -> Tuple {
-            super::point(0, 0, 0)
+        pub const fn zero() -> Tuple {
+            Tuple::point(0.0, 0.0, 0.0)
         }
 
-        pub fn one() -> Tuple {
-            super::point(1, 1, 1)
+        pub const fn one() -> Tuple {
+            Tuple::point(1.0, 1.0, 1.0)
         }
     }
 
     pub mod vector {
         use crate::tuples::Tuple;
 
-        pub fn zero() -> Tuple {
-            super::vector(0, 0, 0)
+        pub const fn zero() -> Tuple {
+            Tuple::vector(0.0, 0.0, 0.0)
         }
 
-        pub fn one() -> Tuple {
-            super::vector(1, 1, 1)
+        pub const fn one() -> Tuple {
+            Tuple::vector(1.0, 1.0, 1.0)
+        }
+
+        pub const fn up() -> Tuple {
+            Tuple::vector(0.0, 1.0, 0.0)
         }
     }
 }
